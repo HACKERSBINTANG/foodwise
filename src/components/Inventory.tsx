@@ -29,42 +29,45 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onAction, onAdd }) 
   };
 
   return (
-    <div className="space-y-4 pb-24">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-neutral-800">Dapur Saya</h2>
+    <div className="space-y-6 pb-24">
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <p className="label-caps mb-1">Manajemen Stok</p>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dapur Saya</h2>
+        </div>
         <button 
           onClick={onAdd}
-          className="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-bold text-sm active:scale-95 transition-transform"
+          className="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-emerald-100"
         >
-          + Tambah Bahan
+          + Tambah
         </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="text-center py-20 opacity-50 space-y-4">
-          <Package size={48} className="mx-auto" />
-          <p className="text-sm">Dapur kamu kosong.<br/>Mulai tambahkan makanan!</p>
+        <div className="text-center py-24 opacity-30 space-y-4">
+          <Package size={64} className="mx-auto" strokeWidth={1} />
+          <p className="text-sm italic font-medium">Belum ada bahan di dapur...</p>
         </div>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-4">
           {items.map((item, idx) => {
             const daysLeft = getDaysLeft(item.expiryDate);
             return (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.05 }}
-                className="clay-card rounded-2xl p-4 flex items-center justify-between group"
+                className="geometric-card p-5 flex items-center justify-between group"
               >
                 <div className="flex-1">
-                  <h3 className="font-bold text-neutral-800">{item.name}</h3>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-xs text-neutral-400 font-medium">
+                  <h3 className="font-bold text-slate-800 text-lg">{item.name}</h3>
+                  <div className="flex items-center gap-4 mt-1.5">
+                    <span className="label-caps !text-slate-400">
                       {item.quantity}{item.unit}
                     </span>
                     <span className={cn(
-                      "text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-tighter flex items-center gap-1",
+                      "text-[10px] px-2.5 py-0.5 rounded-lg border font-bold uppercase tracking-widest flex items-center gap-1.5",
                       getStatusColor(daysLeft)
                     )}>
                       <Clock size={10} />
@@ -73,18 +76,18 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onAction, onAdd }) 
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
                   <button
                     onClick={() => onAction(item.id, 'thrown')}
-                    className="p-3 text-neutral-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                    title="Tanda sebagai Terbuang"
+                    className="p-3 text-slate-300 hover:text-rose-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                    title="Buang"
                   >
                     <Trash2 size={18} />
                   </button>
                   <button
                     onClick={() => onAction(item.id, 'eaten')}
-                    className="p-3 text-neutral-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-xl transition-colors"
-                    title="Tanda sebagai Dimakan"
+                    className="p-3 text-slate-300 hover:text-emerald-600 hover:bg-white hover:shadow-sm rounded-lg transition-all"
+                    title="Dimakan"
                   >
                     <CheckCircle size={18} />
                   </button>

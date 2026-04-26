@@ -1,36 +1,49 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #10b981;
-  --color-primary-dark: #059669;
-  --color-secondary: #f0fdf4;
-  --color-accent: #f59e0b;
-  --color-waste: #ef4444;
+  --color-primary: #059669;
+  --color-primary-dark: #064e3b;
+  --color-primary-light: #ecfdf5;
+  --color-bg-soft: #f3f7f4;
+  --color-slate-labels: #94a3b8;
+  --color-waste-rose: #f43f5e;
   
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
 }
 
 @layer base {
   body {
-    @apply bg-neutral-50 text-neutral-900 antialiased;
+    @apply bg-[#f3f7f4] text-slate-800 antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
-.clay-card {
-  @apply bg-white border border-neutral-100 shadow-sm transition-all duration-300;
+.geometric-card {
+  @apply bg-white border border-emerald-100 rounded-3xl shadow-sm transition-all duration-300;
 }
 
-.clay-card:hover {
-  @apply shadow-md -translate-y-1;
+.label-caps {
+  @apply text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400;
 }
 
-.nudge-enter {
-  animation: nudge-slide 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+.impact-number {
+  @apply text-7xl font-light tracking-tighter leading-none;
 }
 
-@keyframes nudge-slide {
-  from { transform: translateY(100%) scale(0.9); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-emerald-100 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-emerald-200;
 }

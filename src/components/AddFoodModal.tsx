@@ -45,40 +45,43 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-8 overflow-hidden"
+          className="relative bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-10 overflow-hidden shadow-2xl"
         >
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-neutral-800">Tambah Makanan</h2>
-            <button onClick={onClose} className="p-2 bg-neutral-100 rounded-full text-neutral-500">
+          <div className="flex justify-between items-center mb-10">
+            <div>
+              <p className="label-caps mb-1">Input Data</p>
+              <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Tambah Makanan</h2>
+            </div>
+            <button onClick={onClose} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 hover:text-rose-500 transition-colors">
               <X size={20} />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-neutral-400 tracking-widest pl-1">Nama Makanan</label>
+              <label className="label-caps pl-1">Nama Makanan</label>
               <div className="relative">
-                <Edit3 className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+                <Edit3 className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600/40" size={18} />
                 <input
                   type="text"
                   required
                   placeholder="Misal: Alpukat"
-                  className="w-full bg-neutral-50 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500 font-medium transition-all"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-neutral-400 tracking-widest pl-1">Jumlah</label>
+                <label className="label-caps pl-1">Jumlah</label>
                 <div className="relative">
-                  <Scale className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+                  <Scale className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600/40" size={18} />
                   <input
                     type="number"
                     required
-                    className="w-full bg-neutral-50 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500 font-medium transition-all"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all"
                     value={formData.quantity}
                     onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
                   />
@@ -86,9 +89,9 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-neutral-400 tracking-widest pl-1">Satuan</label>
+                <label className="label-caps pl-1">Satuan</label>
                 <select
-                  className="w-full bg-neutral-50 border-none rounded-2xl py-4 px-4 focus:ring-2 focus:ring-emerald-500 font-medium transition-all appearance-none"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all appearance-none"
                   value={formData.unit}
                   onChange={e => setFormData({ ...formData, unit: e.target.value as any })}
                 >
@@ -101,13 +104,13 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-neutral-400 tracking-widest pl-1 text-red-500">Tanggal Kedaluwarsa</label>
+              <label className="label-caps pl-1 !text-rose-500">Tanggal Kedaluwarsa</label>
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
+                <Calendar className="absolute left-5 top-1/2 -translate-y-1/2 text-rose-300" size={18} />
                 <input
                   type="date"
                   required
-                  className="w-full bg-neutral-50 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-emerald-500 font-medium transition-all"
+                  className="w-full bg-slate-50 border border-rose-50 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 outline-none font-medium transition-all"
                   value={formData.expiryDate}
                   onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
                 />
@@ -116,9 +119,9 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
 
             <button
               type="submit"
-              className="w-full bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-200 active:scale-95 transition-transform"
+              className="w-full bg-emerald-600 text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition-all text-xs uppercase tracking-widest mt-4"
             >
-              Tambah ke Dapur
+              Simpan ke Dapur
             </button>
           </form>
         </motion.div>

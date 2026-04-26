@@ -73,23 +73,50 @@ export default function App() {
     }
   };
 
+  const handleResetLog = () => {
+    Storage.clearLog();
+    setLog([]);
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col max-w-lg mx-auto shadow-2xl bg-white relative">
       {/* Header */}
-      <header className="p-6 pb-2 sticky top-0 bg-white/80 backdrop-blur-md z-30">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-black text-emerald-600 tracking-tighter">FoodWise</h1>
-            <p className="text-[10px] uppercase font-bold text-neutral-400 tracking-[0.2em] mt-0.5">Hidup Lebih Bermakna</p>
+      <header className="p-8 pb-4 sticky top-0 bg-[#f3f7f4]/80 backdrop-blur-md z-30">
+        <div className="flex justify-between items-center bg-white p-5 rounded-3xl shadow-sm border border-emerald-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+              <div className="w-5 h-5 border-2 border-white rounded-sm transform rotate-45" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-emerald-900 tracking-tight leading-none">FoodWise</h1>
+              <p className="text-[10px] uppercase font-black text-emerald-600/40 tracking-[0.3em] mt-1">Indonesia</p>
+            </div>
           </div>
-          <button className="p-2 text-neutral-400 hover:text-emerald-500 transition-colors">
-            <Info size={20} />
-          </button>
+          <nav className="flex gap-4">
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-widest pb-1 transition-all",
+                activeTab === 'dashboard' ? "text-emerald-700 border-b-2 border-emerald-600" : "text-slate-400"
+              )}
+            >
+              Dashboard
+            </button>
+            <button 
+              onClick={() => setActiveTab('inventory')}
+              className={cn(
+                "text-[10px] font-bold uppercase tracking-widest pb-1 transition-all",
+                activeTab === 'inventory' ? "text-emerald-700 border-b-2 border-emerald-600" : "text-slate-400"
+              )}
+            >
+              Dapur
+            </button>
+          </nav>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-6 pt-4">
+      <main className="flex-1 px-8 pt-2 pb-40 overflow-y-auto custom-scrollbar">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
             <motion.div
@@ -98,7 +125,7 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
             >
-              <Dashboard log={log} inventory={inventory} onShare={handleShare} />
+              <Dashboard log={log} inventory={inventory} onShare={handleShare} onReset={handleResetLog} />
             </motion.div>
           ) : (
             <motion.div
@@ -117,36 +144,21 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/90 backdrop-blur-xl border-t border-neutral-100 px-8 py-4 flex justify-between items-center z-40">
-        <button 
-          onClick={() => setActiveTab('dashboard')}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-all",
-            activeTab === 'dashboard' ? "text-emerald-600 scale-110" : "text-neutral-400"
-          )}
-        >
-          <LayoutDashboard size={24} fill={activeTab === 'dashboard' ? "currentColor" : "none"} strokeWidth={activeTab === 'dashboard' ? 2 : 1.5} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Dashboard</span>
-        </button>
-
+      {/* Navigation (Subtle Status Bar style) */}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/40 backdrop-blur-md px-10 py-4 flex justify-between items-center z-40 border-t border-emerald-50">
+        <div className="label-caps !text-[7px] opacity-30">v1.0.4</div>
+        
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="bg-emerald-600 text-white p-4 rounded-full -translate-y-8 shadow-xl shadow-emerald-200 active:scale-90 transition-transform"
+          className="bg-emerald-600 text-white p-5 rounded-3xl -translate-y-6 shadow-2xl shadow-emerald-200 active:scale-90 transition-transform flex items-center gap-2 group"
         >
-          <PlusCircle size={28} />
+          <PlusCircle size={24} />
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold text-xs uppercase tracking-widest">Tambah</span>
         </button>
 
-        <button 
-          onClick={() => setActiveTab('inventory')}
-          className={cn(
-            "flex flex-col items-center gap-1 transition-all",
-            activeTab === 'inventory' ? "text-emerald-600 scale-110" : "text-neutral-400"
-          )}
-        >
-          <ShoppingBasket size={24} fill={activeTab === 'inventory' ? "currentColor" : "none"} strokeWidth={activeTab === 'inventory' ? 2 : 1.5} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">Dapur</span>
-        </button>
+        <div className="flex gap-4">
+          <span className="label-caps !text-[7px] text-emerald-800 opacity-30">Target 82%</span>
+        </div>
       </nav>
 
       {/* Modal */}

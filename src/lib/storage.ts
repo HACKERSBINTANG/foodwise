@@ -31,6 +31,10 @@ export const Storage = {
     localStorage.setItem(STORAGE_KEYS.WASTE_LOG, JSON.stringify(log));
   },
 
+  clearLog: () => {
+    localStorage.setItem(STORAGE_KEYS.WASTE_LOG, JSON.stringify([]));
+  },
+
   deleteItem: (id: string) => {
     const inventory = Storage.getInventory();
     Storage.setInventory(inventory.filter(item => item.id !== id));

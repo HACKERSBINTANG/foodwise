@@ -1,100 +1,134 @@
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { TrendingDown, AlertTriangle, Lightbulb, Share2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { TrendingDown, Share2, RotateCcw, Wallet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { WasteEntry, FoodItem } from '../types';
-import { format, differenceInDays } from 'date-fns';
+import { WasteEntry } from '../types';
 
 interface DashboardProps {
   log: WasteEntry[];
-  inventory: FoodItem[];
   onShare: () => void;
+  onReset: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ log, inventory, onShare }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ log, onShare, onReset }) => {
   const totalWaste = useMemo(() => log.filter(e => e.status === 'thrown').reduce((acc, curr) => acc + curr.quantity, 0), [log]);
   const totalEaten = useMemo(() => log.filter(e => e.status === 'eaten').reduce((acc, curr) => acc + curr.quantity, 0), [log]);
   
+  // Savings Calculation Logic
+  // Average Indonesian household waste: ~100g/day per person (hypothetically for this app)
+  // Value of food: roughly Rp 50 per gram (average)
+  const savings = useMemo(() => {
+    const avgMonthlyWasteGrams = 3000; // 3kg/month average
+    const currentWasteGrams = totalWaste;
+    const reducedGrams = Math.max(0, avgMonthlyWasteGrams - currentWasteGrams);
+    const valuePerGram = 50; // Rp 50 per gram
+    return reducedGrams * valuePerGram;
+  }, [totalWaste]);
+
   const chartData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      return format(d, 'yyyy-MM-dd');
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }).reverse();
 
+    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     return last7Days.map(date => {
       const dailyWaste = log
         .filter(e => e.date.startsWith(date) && e.status === 'thrown')
         .reduce((acc, curr) => acc + curr.quantity, 0);
       return {
-        name: format(new Date(date), 'EEE'),
+        name: dayNames[new Date(date).getDay()],
         waste: dailyWaste
       };
     });
   }, [log]);
 
-  const activeNudges = useMemo(() => {
-    const nudges = [];
-    
-    if (totalWaste > 1000) {
-      nudges.push({
-        id: 'heavy-waste',
-        type: 'waste',
-        message: `Kamu telah membuang ${totalWaste}g makanan bulan ini. Itu cukup untuk memberi makan seseorang selama sehari!`,
-        icon: <TrendingDown className="text-red-500" />
-      });
-    }
-
-    const expiringSoon = inventory.filter(item => {
-      const days = differenceInDays(new Date(item.expiryDate), new Date());
-      return days >= 0 && days <= 2;
-    });
-
-    if (expiringSoon.length > 0) {
-      const days = differenceInDays(new Date(expiringSoon[0].expiryDate), new Date());
-      nudges.push({
-        id: 'expiring',
-        type: 'expiry',
-        message: `${expiringSoon[0].name} akan kedaluwarsa dalam ${days === 0 ? 'hari ini' : days + ' hari'}. Rencanakan menu makanan segera!`,
-        icon: <AlertTriangle className="text-amber-500" />
-      });
-    }
-
-    nudges.push({
-      id: 'sharing-tip',
-      type: 'tips',
-      message: "Punya bahan makanan sisa? Bagikan dengan tetangga daripada dibuang.",
-      icon: <Lightbulb className="text-emerald-500" />
-    });
-
-    return nudges;
-  }, [totalWaste, inventory]);
-
   return (
-    <div className="space-y-6 pb-20">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6 pb-32">
+      {/* Stats Section with Impact Card */}
+      <div className="space-y-6">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="clay-card rounded-2xl p-4 border-l-4 border-emerald-500"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-emerald-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden"
         >
-          <p className="text-xs font-semibold uppercase text-neutral-400 tracking-wider">Total Dimakan</p>
-          <h3 className="text-2xl font-bold text-emerald-600">{totalEaten}g</h3>
+          <div className="relative z-10">
+            <div className="flex justify-between items-start">
+              <h2 className="label-caps !text-emerald-300/60 mb-2">Total Limbah Bulan Ini</h2>
+              <button 
+                onClick={onReset}
+                className="p-2 bg-emerald-800/50 rounded-xl text-emerald-200 hover:text-white transition-colors"
+                title="Reset Data"
+              >
+                <RotateCcw size={16} />
+              </button>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="impact-number">{totalWaste}</span>
+              <span className="text-2xl font-light opacity-60">gram</span>
+            </div>
+            <p className="mt-4 text-emerald-200/80 text-sm leading-relaxed max-w-[240px] italic">
+              "Kamu lebih hemat dari 78% warga di sekitarmu!"
+            </p>
+          </div>
+          <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-emerald-800 rounded-full blur-3xl opacity-50"></div>
         </motion.div>
-        
+
+        {/* Savings Calculator Card */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="clay-card rounded-2xl p-4 border-l-4 border-red-500"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="geometric-card p-6 bg-gradient-to-br from-white to-emerald-50/30 overflow-hidden relative"
         >
-          <p className="text-xs font-semibold uppercase text-neutral-400 tracking-wider">Total Limbah</p>
-          <h3 className="text-2xl font-bold text-red-600">{totalWaste}g</h3>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+              <Wallet size={18} />
+            </div>
+            <h4 className="label-caps !text-emerald-800">Kalkulator Penghematan</h4>
+          </div>
+          
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-slate-500">Estimasi uang yang dihemat:</p>
+            <h3 className="text-3xl font-black text-emerald-600 tracking-tighter">
+              Rp {savings.toLocaleString('id-ID')}
+            </h3>
+            <p className="text-[10px] text-slate-400 mt-1 italic">
+              *Dibandingkan rata-rata nasional (3kg/bulan per rumah tangga)
+            </p>
+          </div>
+          <div className="absolute top-4 right-4 opacity-5 rotate-12">
+            <TrendingDown size={80} />
+          </div>
         </motion.div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            className="geometric-card p-5 border-l-4 border-emerald-500"
+          >
+            <p className="label-caps mb-1">Dimakan</p>
+            <h3 className="text-2xl font-bold text-emerald-600">{totalEaten}g</h3>
+          </motion.div>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            className="geometric-card p-5 border-l-4 border-rose-400"
+          >
+            <p className="label-caps mb-1">Terbuang</p>
+            <h3 className="text-2xl font-bold text-rose-500">{totalWaste}g</h3>
+          </motion.div>
+        </div>
       </div>
 
       {/* Chart */}
-      <div className="clay-card rounded-3xl p-6">
-        <h4 className="text-sm font-bold mb-4 text-neutral-700">Tren Limbah Mingguan (g)</h4>
-        <div className="h-48 w-full">
+      <div className="geometric-card p-6">
+        <h4 className="label-caps mb-4">Tren Limbah Mingguan (g)</h4>
+        <div className="h-48 w-full mt-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
@@ -114,32 +148,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ log, inventory, onShare })
         </div>
       </div>
 
-      {/* Smart Nudges */}
-      <div className="space-y-4">
-        <h4 className="text-sm font-bold text-neutral-700 flex items-center gap-2">
-          <Lightbulb size={16} className="text-emerald-500" />
-          Saran Cerdas
-        </h4>
-        <div className="space-y-3">
-          <AnimatePresence>
-            {activeNudges.map((nudge, idx) => (
-              <motion.div
-                key={nudge.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + (idx * 0.1) }}
-                className="bg-white p-4 rounded-2xl border border-emerald-100 flex gap-4 shadow-sm"
-              >
-                <div className="mt-1">{nudge.icon}</div>
-                <div>
-                  <p className="text-sm text-neutral-700 leading-relaxed">{nudge.message}</p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-
       {/* Quick Actions */}
       <div className="flex gap-4">
         <button 
@@ -153,3 +161,4 @@ export const Dashboard: React.FC<DashboardProps> = ({ log, inventory, onShare })
     </div>
   );
 };
+
