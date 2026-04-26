@@ -1,0 +1,6 @@
+{
+  "name": "FoodWise Indonesia",
+  "description": "Aplikasi perubahan perilaku untuk mengurangi limbah makanan melalui notifikasi cerdas, pelacakan kedaluwarsa, dan pemantauan konsumsi secara sadar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["food_tracking", "behavioral_nudges", "expiry_reminders"]
+}
