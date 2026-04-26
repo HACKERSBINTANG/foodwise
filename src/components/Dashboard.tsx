@@ -18,12 +18,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ log, onShare, onReset }) =
   // Average Indonesian household waste: ~100g/day per person (hypothetically for this app)
   // Value of food: roughly Rp 50 per gram (average)
   const savings = useMemo(() => {
+    if (log.length === 0) return 0; // Reset if no data
+    
     const avgMonthlyWasteGrams = 3000; // 3kg/month average
     const currentWasteGrams = totalWaste;
+    
+    // Calculate savings only if there is tracking activity
+    // If current waste is less than average, we count that as savings
     const reducedGrams = Math.max(0, avgMonthlyWasteGrams - currentWasteGrams);
     const valuePerGram = 50; // Rp 50 per gram
+    
     return reducedGrams * valuePerGram;
-  }, [totalWaste]);
+  }, [totalWaste, log]);
 
   const chartData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
