@@ -36,8 +36,35 @@ export default function App() {
 
   // Load initial data
   useEffect(() => {
-    setInventory(Storage.getInventory());
-    setLog(Storage.getLog());
+    const savedInventory = Storage.getInventory();
+    const savedLog = Storage.getLog();
+    
+    // Seed dummy data if empty for competition presentation
+    if (savedInventory.length === 0 && savedLog.length === 0) {
+      const dummyInventory: FoodItem[] = [
+        { id: '1', name: 'Bayam Organik', category: 'Sayuran', quantity: 200, unit: 'g', expiryDate: new Date(Date.now() + 86400000).toISOString() },
+        { id: '2', name: 'Susu UHT', category: 'Susu & Olahan', quantity: 1, unit: 'L', expiryDate: new Date(Date.now() + 259200000).toISOString() },
+        { id: '3', name: 'Daging Sapi', category: 'Daging', quantity: 500, unit: 'g', expiryDate: new Date(Date.now() + 172800000).toISOString() },
+      ];
+      
+      const now = new Date();
+      const dummyLog: WasteEntry[] = Array.from({ length: 15 }, (_, i) => ({
+        id: `l${i}`,
+        foodName: ['Nasi', 'Tempe', 'Sayur Sop', 'Ayam Goreng'][i % 4],
+        quantity: Math.floor(Math.random() * 200) + 50,
+        unit: 'g',
+        status: Math.random() > 0.3 ? 'eaten' : 'thrown',
+        date: new Date(now.getTime() - (i * 12 * 60 * 60 * 1000)).toISOString()
+      }));
+
+      setInventory(dummyInventory);
+      setLog(dummyLog);
+      Storage.setInventory(dummyInventory);
+      dummyLog.forEach(l => Storage.addLogEntry(l));
+    } else {
+      setInventory(savedInventory);
+      setLog(savedLog);
+    }
   }, []);
 
   const handleAddItem = (data: Omit<FoodItem, 'id' | 'addedAt'>) => {
