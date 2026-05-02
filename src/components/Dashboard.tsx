@@ -1,170 +1,222 @@
 import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { TrendingDown, Share2, RotateCcw, Wallet } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { WasteEntry } from '../types';
+import { 
+  TrendingDown, 
+  ArrowRight,
+  ShieldCheck,
+  AlertCircle,
+  BarChart3,
+  Recycle,
+  Lightbulb,
+  UtensilsCrossed,
+  Trash2,
+  Leaf
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  Tooltip, 
+  ResponsiveContainer,
+  CartesianGrid
+} from 'recharts';
+import { WasteEntry, FoodItem } from '../types';
+import { cn } from '../lib/utils';
 
 interface DashboardProps {
   log: WasteEntry[];
-  onShare: () => void;
-  onReset: () => void;
+  inventory: FoodItem[];
+  score: number;
+  onNavigate: (tab: 'inventory' | 'recommendations' | 'impact') => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ log, onShare, onReset }) => {
-  const totalWaste = useMemo(() => log.filter(e => e.status === 'thrown').reduce((acc, curr) => acc + curr.quantity, 0), [log]);
-  const totalEaten = useMemo(() => log.filter(e => e.status === 'eaten').reduce((acc, curr) => acc + curr.quantity, 0), [log]);
+export const Dashboard: React.FC<DashboardProps> = ({ log, inventory, score, onNavigate }) => {
+  const totalWaste = useMemo(() => 
+    log.filter(e => e.status === 'thrown').reduce((acc, curr) => acc + curr.quantity, 0), 
+  [log]);
   
-  // Savings Calculation Logic
-  // Average Indonesian household waste: ~100g/day per person (hypothetically for this app)
-  // Value of food: roughly Rp 50 per gram (average)
-  const savings = useMemo(() => {
-    if (log.length === 0) return 0; // Reset if no data
-    
-    const avgMonthlyWasteGrams = 3000; // 3kg/month average
-    const currentWasteGrams = totalWaste;
-    
-    // Calculate savings only if there is tracking activity
-    // If current waste is less than average, we count that as savings
-    const reducedGrams = Math.max(0, avgMonthlyWasteGrams - currentWasteGrams);
-    const valuePerGram = 50; // Rp 50 per gram
-    
-    return reducedGrams * valuePerGram;
-  }, [totalWaste, log]);
+  const totalEaten = useMemo(() => 
+    log.filter(e => e.status === 'eaten').reduce((acc, curr) => acc + curr.quantity, 0), 
+  [log]);
+
+  const scoreStatus = useMemo(() => {
+    if (score >= 80) return { label: 'Sangat Efisien', color: 'text-emerald-500', bg: 'bg-emerald-50', icon: <ShieldCheck size={16} /> };
+    if (score >= 50) return { label: 'Normal', color: 'text-amber-500', bg: 'bg-amber-50', icon: <AlertCircle size={16} /> };
+    return { label: 'Boros', color: 'text-rose-500', bg: 'bg-rose-50', icon: <TrendingDown size={16} /> };
+  }, [score]);
 
   const chartData = useMemo(() => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      return d.toISOString().split('T')[0];
     }).reverse();
 
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     return last7Days.map(date => {
-      const dailyWaste = log
-        .filter(e => e.date.startsWith(date) && e.status === 'thrown')
-        .reduce((acc, curr) => acc + curr.quantity, 0);
+      const entries = log.filter(e => e.date.startsWith(date));
       return {
-        name: dayNames[new Date(date).getDay()],
-        waste: dailyWaste
+        name: date.split('-')[2],
+        waste: entries.filter(e => e.status === 'thrown').reduce((acc, curr) => acc + curr.quantity, 0),
+        eaten: entries.filter(e => e.status === 'eaten').reduce((acc, curr) => acc + curr.quantity, 0),
       };
     });
   }, [log]);
 
+  const expiringSoonCount = useMemo(() => {
+    const today = new Date();
+    return inventory.filter(item => {
+      const expiry = new Date(item.expiryDate);
+      const diff = (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+      return diff >= 0 && diff <= 3;
+    }).length;
+  }, [inventory]);
+
   return (
-    <div className="space-y-6 pb-32">
-      {/* Stats Section with Impact Card */}
-      <div className="space-y-6">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-emerald-900 text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden"
-        >
-          <div className="relative z-10">
-            <div className="flex justify-between items-start">
-              <h2 className="label-caps !text-emerald-300/60 mb-2">Total Limbah Bulan Ini</h2>
-              <button 
-                onClick={onReset}
-                className="p-2 bg-emerald-800/50 rounded-xl text-emerald-200 hover:text-white transition-colors"
-                title="Reset Data"
-              >
-                <RotateCcw size={16} />
-              </button>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="impact-number">{totalWaste}</span>
-              <span className="text-2xl font-light opacity-60">gram</span>
-            </div>
-            <p className="mt-4 text-emerald-200/80 text-sm leading-relaxed max-w-[240px] italic">
-              "Kamu lebih hemat dari 78% warga di sekitarmu!"
-            </p>
-          </div>
-          <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-emerald-800 rounded-full blur-3xl opacity-50"></div>
-        </motion.div>
-
-        {/* Savings Calculator Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="geometric-card p-6 bg-gradient-to-br from-white to-emerald-50/30 overflow-hidden relative"
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
-              <Wallet size={18} />
-            </div>
-            <h4 className="label-caps !text-emerald-800">Kalkulator Penghematan</h4>
-          </div>
-          
-          <div className="flex flex-col gap-1">
-            <p className="text-xs text-slate-500">Estimasi uang yang dihemat:</p>
-            <h3 className="text-3xl font-black text-emerald-600 tracking-tighter">
-              Rp {savings.toLocaleString('id-ID')}
-            </h3>
-            <p className="text-[10px] text-slate-400 mt-1 italic">
-              *Dibandingkan rata-rata nasional (3kg/bulan per rumah tangga)
-            </p>
-          </div>
-          <div className="absolute top-4 right-4 opacity-5 rotate-12">
-            <TrendingDown size={80} />
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="geometric-card p-5 border-l-4 border-emerald-500"
-          >
-            <p className="label-caps mb-1">Dimakan</p>
-            <h3 className="text-2xl font-bold text-emerald-600">{totalEaten}g</h3>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="geometric-card p-5 border-l-4 border-rose-400"
-          >
-            <p className="label-caps mb-1">Terbuang</p>
-            <h3 className="text-2xl font-bold text-rose-500">{totalWaste}g</h3>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="geometric-card p-6">
-        <h4 className="label-caps mb-4">Tren Limbah Mingguan (g)</h4>
-        <div className="h-48 w-full mt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-              <YAxis hide />
-              <Tooltip 
-                cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      {/* FoodWise Score Section */}
+      <section className="bg-white p-8 rounded-[2.5rem] shadow-[0_20px_50px_rgba(34,197,94,0.05)] border border-emerald-50 relative overflow-hidden">
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <h2 className="label-caps mb-6">Skor FoodWise Kamu</h2>
+          <div className="relative mb-6">
+            <svg className="w-32 h-32 transform -rotate-90">
+              <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-emerald-50" />
+              <circle
+                cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent"
+                strokeDasharray={364.4}
+                strokeDashoffset={364.4 - (364.4 * score) / 100}
+                className="text-brand-500 transition-all duration-1000 ease-out"
+                strokeLinecap="round"
               />
-              <Bar dataKey="waste" radius={[4, 4, 0, 0]}>
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.waste > 200 ? '#ef4444' : '#10b981'} />
-                ))}
-              </Bar>
-            </BarChart>
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center flex-col">
+              <span className="text-4xl font-black text-slate-800 tracking-tighter">{score}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Poin</span>
+            </div>
+          </div>
+          
+          <div className={cn("px-4 py-1.5 rounded-full flex items-center gap-2 mb-2", scoreStatus.bg)}>
+            <div className={scoreStatus.color}>{scoreStatus.icon}</div>
+            <span className={cn("text-xs font-bold uppercase tracking-wider", scoreStatus.color)}>
+              {scoreStatus.label}
+            </span>
+          </div>
+          <p className="text-sm text-slate-500 max-w-[200px] leading-relaxed">
+            {score >= 80 ? "Hebat! Terus pertahankan pola konsumsi kamu." : "Yuk, kurangi membuang makanan dengan saran cerdas kami."}
+          </p>
+        </div>
+        
+        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/50 rounded-full blur-3xl -mr-16 -mt-16" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-50/50 rounded-full blur-3xl -ml-16 -mb-16" />
+      </section>
+
+      {/* Stats Cards */}
+      <section className="grid grid-cols-2 gap-4">
+        <div className="geometric-card p-6 border-l-4 border-l-brand-500">
+          <div className="flex items-center gap-2 mb-3">
+             <UtensilsCrossed size={14} className="text-brand-500" />
+             <h4 className="label-caps">Dimakan</h4>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-slate-800 tracking-tight">{totalEaten}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase">g</span>
+          </div>
+        </div>
+        <div className="geometric-card p-6 border-l-4 border-l-rose-500">
+          <div className="flex items-center gap-2 mb-3">
+             <Trash2 size={14} className="text-rose-500" />
+             <h4 className="label-caps">Limbah</h4>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-black text-slate-800 tracking-tight">{totalWaste}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase">g</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Expiry Alert Card */}
+      {expiringSoonCount > 0 && (
+        <section 
+          onClick={() => onNavigate('inventory')}
+          className="bg-amber-50 border border-amber-100 p-6 rounded-[2rem] flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-500 shadow-sm">
+              <AlertCircle size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900">{expiringSoonCount} item akan segera kedaluwarsa</p>
+              <p className="text-[11px] text-amber-700/70">Segera gunakan atau bagikan.</p>
+            </div>
+          </div>
+          <ArrowRight size={18} className="text-amber-400" />
+        </section>
+      )}
+
+      {/* Weekly Trend Chart */}
+      <section className="geometric-card p-8">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800 tracking-tight">Tren Mingguan</h3>
+            <p className="text-[11px] text-slate-400 uppercase font-bold tracking-widest mt-1">Konsumsi vs Limbah</p>
+          </div>
+          <BarChart3 className="text-emerald-100" size={24} />
+        </div>
+        
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorEaten" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#22c55e" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorWaste" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }} dy={10} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}
+                labelStyle={{ fontWeight: 800, color: '#1e293b', marginBottom: '4px' }}
+              />
+              <Area type="monotone" dataKey="eaten" name="Dimakan" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorEaten)" />
+              <Area type="monotone" dataKey="waste" name="Limbah" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorWaste)" />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+        
+        <div className="mt-6 pt-6 border-t border-slate-50 flex gap-3 items-start">
+           <Lightbulb size={18} className="text-emerald-500 shrink-0" />
+           <p className="text-[12px] text-slate-500 leading-relaxed italic">
+             {totalWaste > totalEaten * 0.5 
+               ? "Waspada! Limbah kamu minggu ini cukup tinggi. Coba belanja lebih sedikit untuk akhir pekan." 
+               : "Bagus! Kamu mengonsumsi sebagian besar makananmu minggu ini. Pertahankan skor FoodWise kamu."}
+           </p>
+        </div>
+      </section>
 
-      {/* Quick Actions */}
-      <div className="flex gap-4">
-        <button 
-          onClick={onShare}
-          className="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 active:scale-95 transition-transform"
-        >
-          <Share2 size={18} />
-          Bagikan Kelebihan Makanan
-        </button>
-      </div>
+      {/* Sustainable Impact Card Mini */}
+      <section 
+        onClick={() => onNavigate('impact')}
+        className="bg-brand-900 p-8 rounded-[2.5rem] text-white relative overflow-hidden group cursor-pointer"
+      >
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-4 opacity-70">
+            <Recycle size={14} />
+            <h4 className="label-caps !text-white !opacity-100">Dampak Lingkungan</h4>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold tracking-tighter">{(totalEaten / 1000).toFixed(1)}</span>
+            <span className="text-lg opacity-60">kg CO2 dicegah</span>
+          </div>
+          <div className="mt-6 flex items-center text-[11px] font-bold uppercase tracking-widest text-emerald-400 group-hover:gap-2 transition-all">
+            Lihat Detail Dampak <ArrowRight size={14} className="ml-1" />
+          </div>
+        </div>
+        <Leaf className="absolute -bottom-8 -right-8 text-emerald-800/20 w-48 h-48 -rotate-12 group-hover:rotate-0 transition-all duration-700" />
+      </section>
     </div>
   );
 };
-

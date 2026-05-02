@@ -61,12 +61,12 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
             <div className="space-y-2">
               <label className="label-caps pl-1">Nama Makanan</label>
               <div className="relative">
-                <Edit3 className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600/40" size={18} />
+                <Edit3 className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-600/40" size={18} />
                 <input
                   type="text"
                   required
                   placeholder="Misal: Alpukat"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none font-medium transition-all"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -77,11 +77,11 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
               <div className="space-y-2">
                 <label className="label-caps pl-1">Jumlah</label>
                 <div className="relative">
-                  <Scale className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600/40" size={18} />
+                  <Scale className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-600/40" size={18} />
                   <input
                     type="number"
                     required
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none font-medium transition-all"
                     value={formData.quantity}
                     onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
                   />
@@ -91,7 +91,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
               <div className="space-y-2">
                 <label className="label-caps pl-1">Satuan</label>
                 <select
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none font-medium transition-all appearance-none"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 px-6 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none font-medium transition-all appearance-none"
                   value={formData.unit}
                   onChange={e => setFormData({ ...formData, unit: e.target.value as any })}
                 >
@@ -119,7 +119,7 @@ export const AddFoodModal: React.FC<AddFoodModalProps> = ({ isOpen, onClose, onA
 
             <button
               type="submit"
-              className="w-full bg-emerald-600 text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition-all text-xs uppercase tracking-widest mt-4"
+              className="w-full bg-brand-600 text-white font-bold py-5 rounded-[2rem] shadow-xl shadow-brand-100 hover:bg-brand-700 active:scale-95 transition-all text-xs uppercase tracking-widest mt-4"
             >
               Simpan ke Dapur
             </button>

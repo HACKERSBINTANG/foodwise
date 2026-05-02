@@ -3,21 +3,36 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, ShoppingBasket, PlusCircle, Share2, Info } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  ShoppingBasket, 
+  Plus, 
+  Sparkles, 
+  Leaf, 
+  User,
+  UtensilsCrossed,
+  Trash2
+} from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
 import { AddFoodModal } from './components/AddFoodModal';
+import { Recommendations } from './components/Recommendations';
+import { EnvironmentalImpactView } from './components/EnvironmentalImpactView';
+import { Profile } from './components/Profile';
 import { FoodItem, WasteEntry } from './types';
 import { Storage } from './lib/storage';
 import { cn } from './lib/utils';
 
+type Tab = 'dashboard' | 'inventory' | 'recommendations' | 'impact' | 'profile';
+
 export default function App() {
   const [inventory, setInventory] = useState<FoodItem[]>([]);
   const [log, setLog] = useState<WasteEntry[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'inventory'>('dashboard');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isFabOpen, setIsFabOpen] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -58,118 +73,169 @@ export default function App() {
     Storage.setInventory(newInventory);
   };
 
-  const handleShare = () => {
-    const excessFood = inventory.map(i => `${i.name} (${i.quantity}${i.unit})`).join(', ');
-    const text = `Halo! Saya punya kelebihan makanan untuk dibagikan: ${excessFood}. Ada yang berminat? #FoodWise #BagiBukanBuang`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: 'Berbagi FoodWise',
-        text: text,
-      }).catch(console.error);
-    } else {
-      // Fallback: Copy to clipboard or alert
-      alert(`Teks Berbagi Disalin: \n\n${text}`);
+  const score = useMemo(() => {
+    const total = log.length;
+    if (total === 0) return 100;
+    const eaten = log.filter(l => l.status === 'eaten').length;
+    return Math.round((eaten / total) * 100);
+  }, [log]);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard log={log} inventory={inventory} score={score} onNavigate={setActiveTab} />;
+      case 'inventory':
+        return <Inventory items={inventory} onAction={handleAction} onAdd={() => setIsAddModalOpen(true)} />;
+      case 'recommendations':
+        return <Recommendations inventory={inventory} />;
+      case 'impact':
+        return <EnvironmentalImpactView log={log} />;
+      case 'profile':
+        return <Profile log={log} score={score} />;
+      default:
+        return <Dashboard log={log} inventory={inventory} score={score} onNavigate={setActiveTab} />;
     }
   };
 
-  const handleResetLog = () => {
-    Storage.clearLog();
-    setLog([]);
-  };
-
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col max-w-lg mx-auto shadow-2xl bg-white relative">
+    <div className="min-h-screen bg-[#f8faf9] flex flex-col max-w-lg mx-auto shadow-2xl relative overflow-hidden">
       {/* Header */}
-      <header className="p-8 pb-4 sticky top-0 bg-[#f3f7f4]/80 backdrop-blur-md z-30">
-        <div className="flex justify-between items-center bg-white p-5 rounded-3xl shadow-sm border border-emerald-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white rounded-sm transform rotate-45" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-emerald-900 tracking-tight leading-none">FoodWise</h1>
-              <p className="text-[10px] uppercase font-black text-emerald-600/40 tracking-[0.3em] mt-1">Indonesia</p>
-            </div>
+      <header className="px-8 pt-8 pb-4 sticky top-0 bg-[#f8faf9]/80 backdrop-blur-md z-30 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center shadow-lg shadow-brand-100">
+             <Leaf className="text-white" size={16} />
           </div>
-          <nav className="flex gap-4">
-            <button 
-              onClick={() => setActiveTab('dashboard')}
-              className={cn(
-                "text-[10px] font-bold uppercase tracking-widest pb-1 transition-all",
-                activeTab === 'dashboard' ? "text-emerald-700 border-b-2 border-emerald-600" : "text-slate-400"
-              )}
-            >
-              Dashboard
-            </button>
-            <button 
-              onClick={() => setActiveTab('inventory')}
-              className={cn(
-                "text-[10px] font-bold uppercase tracking-widest pb-1 transition-all",
-                activeTab === 'inventory' ? "text-emerald-700 border-b-2 border-emerald-600" : "text-slate-400"
-              )}
-            >
-              Dapur
-            </button>
-          </nav>
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight">FoodWise</h1>
         </div>
+        <button 
+          onClick={() => setActiveTab('profile')}
+          className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+            activeTab === 'profile' ? "bg-brand-100 text-brand-700 shadow-inner" : "bg-white text-slate-400 shadow-sm border border-slate-100"
+          )}
+        >
+          <User size={20} />
+        </button>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-8 pt-2 pb-40 overflow-y-auto custom-scrollbar">
+      <main className="flex-1 px-6 overflow-y-auto custom-scrollbar pb-32">
         <AnimatePresence mode="wait">
-          {activeTab === 'dashboard' ? (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-            >
-              <Dashboard log={log} inventory={inventory} onShare={handleShare} onReset={handleResetLog} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="inventory"
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-            >
-              <Inventory 
-                items={inventory} 
-                onAction={handleAction} 
-                onAdd={() => setIsAddModalOpen(true)} 
-              />
-            </motion.div>
-          )}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {renderContent()}
+          </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Navigation (Subtle Status Bar style) */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/40 backdrop-blur-md px-10 py-4 flex justify-between items-center z-40 border-t border-emerald-50">
-        <div className="label-caps !text-[7px] opacity-30">v1.0.4</div>
+      {/* FAB and Action Buttons */}
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50">
+        <AnimatePresence>
+          {isFabOpen && (
+            <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex gap-4">
+               <motion.button
+                 initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.5, y: 20 }}
+                 onClick={() => {
+                   setIsAddModalOpen(true);
+                   setIsFabOpen(false);
+                 }}
+                 className="w-14 h-14 bg-white rounded-full shadow-xl border border-emerald-50 flex flex-col items-center justify-center text-brand-600"
+               >
+                 <Plus size={20} />
+                 <span className="text-[10px] font-bold uppercase">Bahan</span>
+               </motion.button>
+               <motion.button
+                 initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.5, y: 20 }}
+                 onClick={() => setActiveTab('inventory')}
+                 className="w-14 h-14 bg-brand-600 rounded-full shadow-xl flex flex-col items-center justify-center text-white"
+               >
+                 <UtensilsCrossed size={20} />
+                 <span className="text-[10px] font-bold uppercase">Makan</span>
+               </motion.button>
+            </div>
+          )}
+        </AnimatePresence>
         
         <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-emerald-600 text-white p-5 rounded-3xl -translate-y-6 shadow-2xl shadow-emerald-200 active:scale-90 transition-transform flex items-center gap-2 group"
+          onClick={() => setIsFabOpen(!isFabOpen)}
+          className={cn(
+            "w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90",
+            isFabOpen ? "bg-slate-800 text-white rotate-45" : "bg-brand-600 text-white"
+          )}
         >
-          <PlusCircle size={24} />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-bold text-xs uppercase tracking-widest">Tambah</span>
+          <Plus size={32} />
         </button>
+      </div>
 
-        <div className="flex gap-4">
-          <span className="label-caps !text-[7px] text-emerald-800 opacity-30">Target 82%</span>
-        </div>
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg frosted-nav h-20 px-8 flex justify-between items-center z-40">
+        <NavButton 
+          active={activeTab === 'dashboard'} 
+          onClick={() => setActiveTab('dashboard')} 
+          icon={<LayoutDashboard size={22} />} 
+          label="Utama" 
+        />
+        <NavButton 
+          active={activeTab === 'inventory'} 
+          onClick={() => setActiveTab('inventory')} 
+          icon={<ShoppingBasket size={22} />} 
+          label="Dapur" 
+        />
+        
+        <div className="w-16" /> {/* Space for FAB */}
+        
+        <NavButton 
+          active={activeTab === 'recommendations'} 
+          onClick={() => setActiveTab('recommendations')} 
+          icon={<Sparkles size={22} />} 
+          label="Saran" 
+        />
+        <NavButton 
+          active={activeTab === 'impact'} 
+          onClick={() => setActiveTab('impact')} 
+          icon={<Leaf size={22} />} 
+          label="Dampak" 
+        />
       </nav>
 
-      {/* Modal */}
+      {/* Modals */}
       <AddFoodModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={handleAddItem} 
       />
 
-      {/* Decorative Gradient Background (Limited to Container) */}
-      <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-emerald-50/50 to-transparent -z-10" />
+      {/* Background Decor */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-1/2 bg-gradient-to-b from-brand-50/30 to-transparent -z-10 pointer-events-none" />
     </div>
+  );
+}
+
+function NavButton({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button 
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center gap-1 transition-all",
+        active ? "text-brand-700" : "text-slate-300"
+      )}
+    >
+      <div className={cn(
+        "p-1 rounded-xl transition-all",
+        active && "bg-brand-50"
+      )}>
+        {icon}
+      </div>
+      <span className="text-[10px] font-bold uppercase tracking-tight">{label}</span>
+    </button>
   );
 }

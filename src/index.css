@@ -1,35 +1,56 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #059669;
-  --color-primary-dark: #064e3b;
-  --color-primary-light: #ecfdf5;
-  --color-bg-soft: #f3f7f4;
-  --color-slate-labels: #94a3b8;
-  --color-waste-rose: #f43f5e;
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-200: #bbf7d0;
+  --color-brand-300: #86efac;
+  --color-brand-400: #4ade80;
+  --color-brand-500: #22c55e;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+  --color-brand-900: #14532d;
   
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
-  --radius-3xl: 2rem;
+  --color-accent-amber: #f59e0b;
+  --color-accent-rose: #f43f5e;
+  
+  --radius-button: 1rem;
+  --radius-card: 2.5rem;
+  --radius-tag: 0.75rem;
+
+  --font-serif: "Libre Baskerville", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 }
 
 @layer base {
   body {
-    @apply bg-[#f3f7f4] text-slate-800 antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-[#f8faf9] text-slate-900 antialiased;
+    font-family: var(--font-sans);
   }
 }
 
-.geometric-card {
-  @apply bg-white border border-emerald-100 rounded-3xl shadow-sm transition-all duration-300;
-}
+@layer components {
+  .geometric-card {
+    @apply bg-white border border-emerald-100/50 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 overflow-hidden;
+  }
 
-.label-caps {
-  @apply text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400;
-}
+  .label-caps {
+    @apply text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400;
+  }
 
-.impact-number {
-  @apply text-7xl font-light tracking-tighter leading-none;
+  .btn-primary {
+    @apply bg-brand-600 text-white px-8 py-4 rounded-2xl font-bold text-sm tracking-wide shadow-lg shadow-brand-200 active:scale-95 transition-all;
+  }
+
+  .btn-secondary {
+    @apply bg-white border border-brand-100 text-brand-700 px-8 py-4 rounded-2xl font-bold text-sm tracking-wide hover:bg-brand-50 active:scale-95 transition-all;
+  }
+
+  .impact-number {
+    @apply text-5xl font-bold tracking-tighter leading-none text-brand-900;
+  }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -46,4 +67,18 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-emerald-200;
+}
+
+.frosted-nav {
+  @apply bg-white/70 backdrop-blur-2xl border-t border-emerald-50/50;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }

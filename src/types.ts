@@ -19,12 +19,27 @@ export interface WasteEntry {
   unit: string;
   status: 'eaten' | 'thrown';
   date: string;
+  reason?: string;
 }
 
 export interface Nudge {
   id: string;
   message: string;
   type: 'waste' | 'expiry' | 'tips' | 'stats';
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  unlocked: boolean;
+}
+
+export interface EnvironmentalImpact {
+  co2Saved: number; // in kg
+  waterSaved: number; // in liters
+  foodSaved: number; // in kg
 }
 
 export const CATEGORIES = [

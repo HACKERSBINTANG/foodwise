@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Trash2, CheckCircle, Clock, Package } from 'lucide-react';
+import { Trash2, CheckCircle, Clock, Package, AlertCircle, ShoppingBag } from 'lucide-react';
 import { FoodItem } from '../types';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { cn } from '../lib/utils';
 
 interface InventoryProps {
@@ -16,87 +16,143 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onAction, onAdd }) 
     return differenceInDays(new Date(date), new Date());
   };
 
-  const getStatusColor = (days: number) => {
-    if (days < 0) return 'text-red-500 bg-red-50 border-red-100';
-    if (days <= 2) return 'text-amber-500 bg-amber-50 border-amber-100';
-    return 'text-emerald-500 bg-emerald-50 border-emerald-100';
-  };
+  const urgentItems = useMemo(() => {
+    return items.filter(item => {
+      const days = getDaysLeft(item.expiryDate);
+      return days >= 0 && days <= 2;
+    });
+  }, [items]);
 
-  const getStatusText = (days: number) => {
-    if (days < 0) return 'Kedaluwarsa';
-    if (days === 0) return 'Hari Ini';
-    return `${days} hari lagi`;
+  const sortedItems = useMemo(() => {
+    return [...items].sort((a, b) => 
+      new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+    );
+  }, [items]);
+
+  const getStatusClasses = (days: number) => {
+    if (days < 0) return { 
+      label: 'Expired', 
+      classes: 'text-rose-500 bg-rose-50 border-rose-100',
+      dot: 'bg-rose-500'
+    };
+    if (days <= 2) return { 
+      label: 'Urgent', 
+      classes: 'text-amber-500 bg-amber-50 border-amber-100',
+      dot: 'bg-amber-500'
+    };
+    return { 
+      label: 'Safe', 
+      classes: 'text-emerald-500 bg-emerald-50 border-emerald-100',
+      dot: 'bg-emerald-500'
+    };
   };
 
   return (
-    <div className="space-y-6 pb-24">
-      <div className="flex justify-between items-end mb-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 pb-20">
+      {/* Header with Title and Add Button */}
+      <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm border border-brand-50">
         <div>
-          <p className="label-caps mb-1">Manajemen Stok</p>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dapur Saya</h2>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Dapur Saya</h2>
+          <p className="text-[10px] uppercase font-black text-brand-600/40 tracking-[0.2em] mt-1">
+            {items.length} Bahan Tersimpan
+          </p>
         </div>
         <button 
           onClick={onAdd}
-          className="bg-emerald-600 text-white px-5 py-2.5 rounded-2xl font-bold text-xs uppercase tracking-widest active:scale-95 transition-all shadow-lg shadow-emerald-100"
+          className="w-12 h-12 bg-brand-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-100 active:scale-95 transition-all"
         >
-          + Tambah
+          <ShoppingBag size={20} />
         </button>
       </div>
 
-      {items.length === 0 ? (
-        <div className="text-center py-24 opacity-30 space-y-4">
-          <Package size={64} className="mx-auto" strokeWidth={1} />
-          <p className="text-sm italic font-medium">Belum ada bahan di dapur...</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {items.map((item, idx) => {
-            const daysLeft = getDaysLeft(item.expiryDate);
-            return (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="geometric-card p-5 flex items-center justify-between group"
-              >
-                <div className="flex-1">
-                  <h3 className="font-bold text-slate-800 text-lg">{item.name}</h3>
-                  <div className="flex items-center gap-4 mt-1.5">
-                    <span className="label-caps !text-slate-400">
-                      {item.quantity}{item.unit}
-                    </span>
-                    <span className={cn(
-                      "text-[10px] px-2.5 py-0.5 rounded-lg border font-bold uppercase tracking-widest flex items-center gap-1.5",
-                      getStatusColor(daysLeft)
-                    )}>
-                      <Clock size={10} />
-                      {getStatusText(daysLeft)}
-                    </span>
+      {/* Urgent - Use Now Section */}
+      {urgentItems.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} className="text-amber-500" />
+            <h3 className="label-caps !text-amber-600">Gunakan Segera</h3>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x">
+             {urgentItems.map(item => (
+                <motion.div 
+                  key={item.id}
+                  whileHover={{ y: -4 }}
+                  className="min-w-[160px] bg-white p-5 rounded-[2rem] border-2 border-amber-100 shadow-sm snap-start"
+                >
+                  <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 mb-3">
+                    <Clock size={20} />
                   </div>
-                </div>
-
-                <div className="flex items-center gap-1 bg-slate-50 p-1 rounded-xl">
-                  <button
-                    onClick={() => onAction(item.id, 'thrown')}
-                    className="p-3 text-slate-300 hover:text-rose-500 hover:bg-white hover:shadow-sm rounded-lg transition-all"
-                    title="Buang"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => onAction(item.id, 'eaten')}
-                    className="p-3 text-slate-300 hover:text-emerald-600 hover:bg-white hover:shadow-sm rounded-lg transition-all"
-                    title="Dimakan"
-                  >
-                    <CheckCircle size={18} />
-                  </button>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                  <h4 className="font-bold text-slate-800 text-sm mb-1 truncate">{item.name}</h4>
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">
+                    {getDaysLeft(item.expiryDate) === 0 ? 'Hari Ini' : `${getDaysLeft(item.expiryDate)} Hari Lagi`}
+                  </p>
+                </motion.div>
+             ))}
+          </div>
+        </section>
       )}
+
+      {/* Main Inventory List */}
+      <section className="space-y-4">
+        <h3 className="label-caps">Semua Bahan</h3>
+        {items.length === 0 ? (
+          <div className="bg-white rounded-[2.5rem] py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 opacity-50">
+            <Package size={48} className="text-slate-300 mb-4" strokeWidth={1} />
+            <p className="text-sm font-medium italic text-slate-400">Dapur masih kosong...</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {sortedItems.map((item, idx) => {
+              const daysLeft = getDaysLeft(item.expiryDate);
+              const status = getStatusClasses(daysLeft);
+              
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="geometric-card p-4 flex items-center gap-4 group"
+                >
+                  <div className={cn("w-2 h-12 rounded-full", status.dot)} />
+                  
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-slate-800 truncate">{item.name}</h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {item.quantity}{item.unit}
+                      </span>
+                      <span className={cn(
+                        "text-[9px] px-2 py-0.5 rounded-full border font-black uppercase tracking-widest",
+                        status.classes
+                      )}>
+                        {status.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => onAction(item.id, 'eaten')}
+                      className="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-600 hover:text-white"
+                      title="Selesai Dimakan"
+                    >
+                      <CheckCircle size={18} />
+                    </button>
+                    <button
+                      onClick={() => onAction(item.id, 'thrown')}
+                      className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600 hover:text-white"
+                      title="Terbuang"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };
