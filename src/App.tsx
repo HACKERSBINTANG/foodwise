@@ -21,6 +21,7 @@ import { AddFoodModal } from './components/AddFoodModal';
 import { Recommendations } from './components/Recommendations';
 import { EnvironmentalImpactView } from './components/EnvironmentalImpactView';
 import { Profile } from './components/Profile';
+import { AddActivityModal } from './components/AddActivityModal';
 import { FoodItem, WasteEntry } from './types';
 import { Storage } from './lib/storage';
 import { cn } from './lib/utils';
@@ -32,7 +33,10 @@ export default function App() {
   const [log, setLog] = useState<WasteEntry[]>([]);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [activityType, setActivityType] = useState<'eaten' | 'thrown'>('eaten');
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -42,15 +46,15 @@ export default function App() {
     // Seed dummy data if empty for competition presentation
     if (savedInventory.length === 0 && savedLog.length === 0) {
       const dummyInventory: FoodItem[] = [
-        { id: '1', name: 'Bayam Organik', category: 'Sayuran', quantity: 200, unit: 'g', expiryDate: new Date(Date.now() + 86400000).toISOString() },
-        { id: '2', name: 'Susu UHT', category: 'Susu & Olahan', quantity: 1, unit: 'L', expiryDate: new Date(Date.now() + 259200000).toISOString() },
-        { id: '3', name: 'Daging Sapi', category: 'Daging', quantity: 500, unit: 'g', expiryDate: new Date(Date.now() + 172800000).toISOString() },
+        { id: '1', name: 'Bayam Organik', quantity: 200, unit: 'g', expiryDate: new Date(Date.now() + 86400000).toISOString(), addedAt: new Date().toISOString() },
+        { id: '2', name: 'Susu UHT', quantity: 1, unit: 'unit', expiryDate: new Date(Date.now() + 259200000).toISOString(), addedAt: new Date().toISOString() },
+        { id: '3', name: 'Daging Sapi', quantity: 500, unit: 'g', expiryDate: new Date(Date.now() + 172800000).toISOString(), addedAt: new Date().toISOString() },
       ];
       
       const now = new Date();
       const dummyLog: WasteEntry[] = Array.from({ length: 15 }, (_, i) => ({
         id: `l${i}`,
-        foodName: ['Nasi', 'Tempe', 'Sayur Sop', 'Ayam Goreng'][i % 4],
+        name: ['Nasi', 'Tempe', 'Sayur Sop', 'Ayam Goreng'][i % 4],
         quantity: Math.floor(Math.random() * 200) + 50,
         unit: 'g',
         status: Math.random() > 0.3 ? 'eaten' : 'thrown',
@@ -76,6 +80,7 @@ export default function App() {
     const updated = [newItem, ...inventory];
     setInventory(updated);
     Storage.setInventory(updated);
+    showFeedback("Bahan berhasil ditambahkan ke dapur!", "success");
   };
 
   const handleAction = (id: string, status: 'eaten' | 'thrown') => {
@@ -98,6 +103,50 @@ export default function App() {
     const newInventory = inventory.filter(i => i.id !== id);
     setInventory(newInventory);
     Storage.setInventory(newInventory);
+
+    if (status === 'eaten') {
+      showFeedback("Mantap! Kamu memakan makananmu daripada membuangnya.", "success");
+    } else {
+      showFeedback("Sangat disayangkan, lain kali coba beli secukupnya ya.", "warning");
+    }
+  };
+
+  const handleLogActivity = (entryData: Omit<WasteEntry, 'id' | 'date'>) => {
+    const entry: WasteEntry = {
+      ...entryData,
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString()
+    };
+
+    const newLog = [entry, ...log];
+    setLog(newLog);
+    Storage.addLogEntry(entry);
+
+    // If matches inventory (fuzzy match name), reduce quantity
+    const existingItemIdx = inventory.findIndex(i => i.name.toLowerCase() === entry.name.toLowerCase());
+    if (existingItemIdx > -1) {
+      const updatedInventory = [...inventory];
+      const item = { ...updatedInventory[existingItemIdx] };
+      item.quantity = Math.max(0, item.quantity - entry.quantity);
+      if (item.quantity === 0) {
+        updatedInventory.splice(existingItemIdx, 1);
+      } else {
+        updatedInventory[existingItemIdx] = item;
+      }
+      setInventory(updatedInventory);
+      Storage.setInventory(updatedInventory);
+    }
+
+    if (entry.status === 'eaten') {
+      showFeedback("Aktivitas makan dicatat! Skor kamu meningkat.", "success");
+    } else {
+      showFeedback("Aktivitas limbah dicatat. Ayo kurangi ke depannya!", "warning");
+    }
+  };
+
+  const showFeedback = (message: string, type: 'success' | 'warning') => {
+    setFeedback({ message, type });
+    setTimeout(() => setFeedback(null), 4000);
   };
 
   const score = useMemo(() => {
@@ -145,8 +194,31 @@ export default function App() {
         </button>
       </header>
 
+      {/* Feedback Toast */}
+      <AnimatePresence>
+        {feedback && (
+          <motion.div
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -100 }}
+            className="fixed top-0 left-0 right-0 z-[100] p-4 flex justify-center pointer-events-none"
+          >
+            <div className={cn(
+              "w-full max-w-md px-6 py-4 rounded-3xl shadow-2xl flex items-center gap-4 border text-sm font-bold tracking-tight pointer-events-auto",
+              feedback.type === 'success' ? "bg-emerald-600 border-emerald-500 text-white" : "bg-rose-600 border-rose-500 text-white"
+            )}>
+              <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                <Sparkles size={20} />
+              </div>
+              <p className="flex-1 leading-tight">{feedback.message}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <main className="flex-1 px-6 overflow-y-auto custom-scrollbar pb-32">
+
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -176,17 +248,35 @@ export default function App() {
                  className="w-14 h-14 bg-white rounded-full shadow-xl border border-emerald-50 flex flex-col items-center justify-center text-brand-600"
                >
                  <Plus size={20} />
-                 <span className="text-[10px] font-bold uppercase">Bahan</span>
+                 <span className="text-[10px] font-bold uppercase">Stok Baru</span>
                </motion.button>
                <motion.button
                  initial={{ opacity: 0, scale: 0.5, y: 20 }}
                  animate={{ opacity: 1, scale: 1, y: 0 }}
                  exit={{ opacity: 0, scale: 0.5, y: 20 }}
-                 onClick={() => setActiveTab('inventory')}
+                 onClick={() => {
+                   setActivityType('eaten');
+                   setIsActivityModalOpen(true);
+                   setIsFabOpen(false);
+                 }}
                  className="w-14 h-14 bg-brand-600 rounded-full shadow-xl flex flex-col items-center justify-center text-white"
                >
                  <UtensilsCrossed size={20} />
                  <span className="text-[10px] font-bold uppercase">Makan</span>
+               </motion.button>
+               <motion.button
+                 initial={{ opacity: 0, scale: 0.5, y: 20 }}
+                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                 exit={{ opacity: 0, scale: 0.5, y: 20 }}
+                 onClick={() => {
+                   setActivityType('thrown');
+                   setIsActivityModalOpen(true);
+                   setIsFabOpen(false);
+                 }}
+                 className="w-14 h-14 bg-rose-500 rounded-full shadow-xl flex flex-col items-center justify-center text-white"
+               >
+                 <Trash2 size={20} />
+                 <span className="text-[10px] font-bold uppercase">Buang</span>
                </motion.button>
             </div>
           )}
@@ -239,6 +329,13 @@ export default function App() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onAdd={handleAddItem} 
+      />
+
+      <AddActivityModal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        onLog={handleLogActivity}
+        initialType={activityType}
       />
 
       {/* Background Decor */}

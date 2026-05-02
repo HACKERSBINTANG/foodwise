@@ -116,7 +116,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onAction, onAdd }) 
                 >
                   <div className={cn("w-2 h-12 rounded-full", status.dot)} />
                   
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onAction(item.id, 'eaten')}>
                     <h4 className="font-bold text-slate-800 truncate">{item.name}</h4>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -131,20 +131,26 @@ export const Inventory: React.FC<InventoryProps> = ({ items, onAction, onAdd }) 
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={() => onAction(item.id, 'eaten')}
-                      className="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-600 hover:text-white"
-                      title="Selesai Dimakan"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAction(item.id, 'eaten');
+                      }}
+                      className="w-12 h-12 bg-brand-50 text-brand-600 rounded-2xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all hover:bg-brand-600 hover:text-white group/btn"
                     >
                       <CheckCircle size={18} />
+                      <span className="text-[7px] font-black uppercase tracking-tighter">Makan</span>
                     </button>
                     <button
-                      onClick={() => onAction(item.id, 'thrown')}
-                      className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-600 hover:text-white"
-                      title="Terbuang"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAction(item.id, 'thrown');
+                      }}
+                      className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-all hover:bg-rose-600 hover:text-white group/btn"
                     >
                       <Trash2 size={18} />
+                      <span className="text-[7px] font-black uppercase tracking-tighter">Buang</span>
                     </button>
                   </div>
                 </motion.div>
